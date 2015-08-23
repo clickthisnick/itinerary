@@ -1,0 +1,287 @@
+
+<link rel="stylesheet" type="text/css" href="lib/css/ceruleanBootswatch.min.css">
+<script src="lib/js/jquery-1.11.3.min.js"></script>
+<script src="lib/js/bootstrap.min.js"></script>
+<script src="lib/js/knockout.js"></script>
+<script src="lib/js/moment.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1" /> 
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            <h2 data-bind="text: whatPrompt"></h2>
+            <input type="text" class="form-control" id="inputDefault" data-bind='value: inputWhat, valueUpdate: "afterkeydown"' /></input>
+        </div>
+        <div class="col-md-5">
+            <h2 data-bind="text: timePrompt"></h2>
+            <table>
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" id="inputDefault" data-bind='value: inputTime, valueUpdate: "afterkeydown"' /></input>
+                    </td>
+                    <td>
+                        <button data-bind="click: $root.clickAdd" class="btn btn-default">Add</button>
+                        <a href="#" class="btn btn-success" data-bind="click: $root.clickToggle,text: toggleText"></a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<br>
+<div class="container">
+    <table class="table">
+        <tr>
+            <td>Time
+            </td>
+            <td>Description
+            </td>
+            <td>Remove
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <h2 data-bind="text: eventTime"></h2>
+            </td>
+            <td>
+                <h2 data-bind="text: eventName"></h2>
+            </td>
+            <td>
+                <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent">X</a>
+            </td>
+        </tr>
+        <!-- ko foreach: actions().slice(0).reverse() -->
+        <tr>
+            <td>
+                <h2 data-bind="text: doTime"></h2>
+            </td>
+            <td>
+                <h2 data-bind="text: actionName"></h2>
+            </td>
+            <td>
+                <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.toggleText"></a>
+            </td>
+        </tr>
+        <!-- /ko -->
+    </table>
+</div>
+
+<script>
+
+function EventAction(actionTime,actionName) {
+    var self = this;
+    self.actionName = actionName;
+    self.actionTime = parseInt(actionTime);   
+    self.doTime = ko.observable("");      
+    self.completed = false;
+}
+
+
+// Overall viewmodel for this screen, along with initial state
+function ViewModel() {
+    var self = this;
+
+    self.eventPromptText = "What is being done?";
+    self.actionFirstPromptText = "What do you do first?"
+    self.actionAferPromptText = "What do you do next?"
+
+    self.timePromptText = "At what time?";
+    self.durationPrompt = "How long (In Min)?"
+
+    self.whatPrompt = ko.observable(self.eventPromptText)
+    self.timePrompt = ko.observable(self.timePromptText)
+
+    self.inputWhat = ko.observable("");
+    self.inputTime = ko.observable("");
+
+    self.eventName = ko.observable("");
+    self.eventTime = ko.observable("");
+
+    self.actions = ko.observableArray([]);
+
+    self.toggleText = ko.observable("X");
+
+    self.clickToggle = function(){
+        // Remove, Up, Down, Complete
+        switch (self.toggleText()) {
+            case "X":
+                self.toggleText("UP");
+                break;
+            case "UP":
+                self.toggleText("DN");
+                break;
+            case "DN":
+                self.toggleText("CO");
+                break;
+            case "CO":
+                self.toggleText("X");
+                break;
+        }
+    }
+
+    self.parseInputs = function(){
+        var inputWhat = self.inputWhat().replace(/(\w)(\w*)/g,
+            function(g0,g1,g2){return g1.toUpperCase() + g2.toLowerCase();});
+        self.inputWhat(inputWhat);
+
+        var inputTime = self.inputTime().toLowerCase();
+        self.inputTime(inputTime);
+    }
+
+    self.clickAdd = function(){
+        // Covert to Pascal Case
+        
+        if (self.inputWhat() == "" || self.inputTime() == ""){
+            alert("Please enter both a what and time");
+            return;
+        }
+
+        self.parseInputs();
+
+        if (self.eventName() == ""){
+            self.addEvent();
+        }
+        else {
+            self.addAction();
+        }
+        self.calculateActionTimes();
+        self.clearInputs();
+        self.changeText();
+    }
+
+    self.changeText = function(){
+        // Changing the event/time prompt
+        if (self.eventName() == ""){
+            self.whatPrompt(self.eventPromptText);
+            self.timePrompt(self.timePromptText);
+        }
+        else if(self.actions().length == 0){
+            self.whatPrompt(self.actionFirstPromptText);
+            self.timePrompt(self.durationPrompt);
+        }
+        else{
+            self.whatPrompt(self.actionAferPromptText);
+            self.timePrompt(self.durationPrompt);
+        }
+    }
+
+    self.clearInputs = function(){
+        self.inputWhat("");
+        self.inputTime("");
+    }
+
+    self.addEvent = function(){
+        self.eventName(self.inputWhat());
+        self.eventTime(self.inputTime().toLowerCase());
+        self.clearInputs();
+    }
+
+    self.addAction = function() {
+        self.actions.push(new EventAction(self.inputTime(), self.inputWhat()));
+    }
+    //.bind(this);  // Ensure that "this" is always this view model
+
+    self.getTime = function(total){
+        var timeString = "-";
+        if (self.eventTime() != ""){
+            var time = moment(self.eventTime(), "hh:mm a");
+            var timeString = time.subtract(total, 'minutes').format("hh:mm a")
+            if (timeString[0] == "0"){
+                timeString = timeString.substr(1);
+            }
+        }
+        return timeString;
+    }
+
+    self.calculateActionTimes = function(){
+        var total = 0;
+        for (var i = self.actions().length - 1; i >= 0; i--) {
+            total+= self.actions()[i].actionTime;
+
+            var timeString = self.getTime(total)
+
+            self.actions()[i].doTime(timeString);
+        };
+    }
+
+    self.toggleAction = function(action){
+        switch (self.toggleText()) {
+            case "X":
+                self.removeAction(action);
+                break;
+            case "UP":
+                var index = self.actions().indexOf(action);
+                var item = self.actions()[index];
+                self.actions().moveDown(item);
+                self.actions.push(new EventAction("", ""));
+                self.actions.pop();
+                self.calculateActionTimes();
+                break;
+            case "DN":
+                var index = self.actions().indexOf(action);
+                var item = self.actions()[index];
+                self.actions().moveUp(item);
+                self.actions.push(new EventAction("", ""));
+                self.actions.pop();
+                self.calculateActionTimes();
+                break;
+            case "CO":
+                self.toggleText("X");
+                break;
+        }
+
+        // This is move up
+
+
+    }
+
+    self.removeAction = function(action) { 
+        self.actions.remove(action) 
+        self.calculateActionTimes();
+        self.changeText();
+    }
+
+    self.removeEvent = function() { 
+        self.eventName("");
+        self.eventTime("");
+        self.calculateActionTimes();
+        self.changeText();
+    }
+}
+
+
+// Array move positions from:
+// http://jeffijoe.com/2013/08/moving-elements-up-and-down-in-a-javascript-array/
+Array.prototype.moveUp = function(value, by) {
+    var index = this.indexOf(value),     
+        newPos = index - (by || 1);
+    
+    if(index === -1) 
+        throw new Error("Element not found in array");
+    
+    if(newPos < 0) 
+        newPos = 0;
+        
+    this.splice(index,1);
+    this.splice(newPos,0,value);
+};
+
+Array.prototype.moveDown = function(value, by) {
+    var index = this.indexOf(value),     
+        newPos = index + (by || 1);
+    
+    if(index === -1) 
+        throw new Error("Element not found in array");
+    
+    if(newPos >= this.length) 
+        newPos = this.length;
+    
+    this.splice(index, 1);
+    this.splice(newPos,0,value);
+};
+
+ko.applyBindings(new ViewModel());
+</script>
