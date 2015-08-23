@@ -1,13 +1,18 @@
 itinerary
 ===========
 
-Find yourself always late to the big event?
+<h4>Find yourself always late to the big event?<h4>
 
 Thats why I created itinerary.
 
-This will allow you to calculate at what time you must start getting ready for the event.
-In the example below I used a Foo Fighters concert as my main event at 3:00 PM.
-Then I added what I needed to get done and how much time they take.
+Itinerary helps you figure out what time you must start preparing for an event<br>
+First add the event and its time.<br>
+Next add the individual steps you need to take before an event ( Brush Teeth, Travel )<br>
 
-Now I know exactly when I need to start preparing for events! No more being late!
+Now you can see what time you need to start preparing for your event! No more being late!
+
+A live version can be found here: <a href='http://clickthisnick.com/projects/itinerary/itinerary.html' target='_blank'>Itinerary Example</a>
+
+Here is an example of a Foo Fighter Concert<br>
+<img src='http://clickthisnick.com/projects/itinerary/Itinerary.png'>
 
