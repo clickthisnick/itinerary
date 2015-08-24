@@ -5,7 +5,7 @@
 <script src="lib/js/knockout.js"></script>
 <script src="lib/js/moment.js"></script>
 
-<meta name="viewport" content="width=device-width, initial-scale=1" /> 
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
 <div class="container">
@@ -49,7 +49,7 @@
             <td>
                 <h2 data-bind="text: eventName"></h2>
             </td>
-            <td>
+            <td data-bind="if: eventName() != ''">
                 <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent">X</a>
             </td>
         </tr>
@@ -74,8 +74,8 @@
 function EventAction(actionTime,actionName) {
     var self = this;
     self.actionName = actionName;
-    self.actionTime = parseInt(actionTime);   
-    self.doTime = ko.observable("");      
+    self.actionTime = parseInt(actionTime);
+    self.doTime = ko.observable("");
     self.completed = false;
 }
 
@@ -133,7 +133,7 @@ function ViewModel() {
 
     self.clickAdd = function(){
         // Covert to Pascal Case
-        
+
         if (self.inputWhat() == "" || self.inputTime() == ""){
             alert("Please enter both a what and time");
             return;
@@ -238,13 +238,13 @@ function ViewModel() {
 
     }
 
-    self.removeAction = function(action) { 
-        self.actions.remove(action) 
+    self.removeAction = function(action) {
+        self.actions.remove(action)
         self.calculateActionTimes();
         self.changeText();
     }
 
-    self.removeEvent = function() { 
+    self.removeEvent = function() {
         self.eventName("");
         self.eventTime("");
         self.calculateActionTimes();
@@ -256,29 +256,29 @@ function ViewModel() {
 // Array move positions from:
 // http://jeffijoe.com/2013/08/moving-elements-up-and-down-in-a-javascript-array/
 Array.prototype.moveUp = function(value, by) {
-    var index = this.indexOf(value),     
+    var index = this.indexOf(value),
         newPos = index - (by || 1);
-    
-    if(index === -1) 
+
+    if(index === -1)
         throw new Error("Element not found in array");
-    
-    if(newPos < 0) 
+
+    if(newPos < 0)
         newPos = 0;
-        
+
     this.splice(index,1);
     this.splice(newPos,0,value);
 };
 
 Array.prototype.moveDown = function(value, by) {
-    var index = this.indexOf(value),     
+    var index = this.indexOf(value),
         newPos = index + (by || 1);
-    
-    if(index === -1) 
+
+    if(index === -1)
         throw new Error("Element not found in array");
-    
-    if(newPos >= this.length) 
+
+    if(newPos >= this.length)
         newPos = this.length;
-    
+
     this.splice(index, 1);
     this.splice(newPos,0,value);
 };
