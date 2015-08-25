@@ -32,40 +32,27 @@
 
 <br>
 <div class="container">
-  <table class="table">
-    <tr>
-      <td>Time
-      </td>
-      <td>Description
-      </td>
-      <td data-bind="text:actionText">
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <h2 data-bind="text: eventTime"></h2>
-      </td>
-      <td>
-        <h2 data-bind="text: eventName"></h2>
-      </td>
-      <td data-bind="if: eventName() != ''">
-        <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent, text:removeToggleText"></a>
-      </td>
-    </tr>
-    <!-- ko foreach: actions().slice(0).reverse() -->
-    <tr>
-      <td>
-        <h2 data-bind="text: doTime"></h2>
-      </td>
-      <td>
-        <h2 data-bind="text: actionName"></h2>
-      </td>
-      <td>
-        <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.toggleText"></a>
-      </td>
-    </tr>
-    <!-- /ko -->
-  </table>
+  <div class="row">
+    <div class="col-xs-4">Time</div>
+    <div class="col-xs-4">Description</div>
+    <div class="col-xs-4" data-bind="text:actionText"></div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-4"><h2 data-bind="text: eventTime"></h2></div>
+    <div class="col-xs-4"><h2 data-bind="text: eventName"></h2></div>
+    <div class="col-xs-4" data-bind="if: eventName() != ''">
+      <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent, text:removeToggleText"></a>
+    </div>
+  </div>
+
+  <div class="row" data-bind="foreach: actions().slice(0).reverse()">
+    <div class="col-xs-4"><h2 data-bind="text: doTime"></h2></div>
+    <div class="col-xs-4"><h2 data-bind="text: actionName"></h2></div>
+    <div class="col-xs-4">
+      <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.toggleText"></a>
+    </div>
+  </div>
 </div>
 
 <script>
