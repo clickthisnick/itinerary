@@ -46,13 +46,15 @@
     </div>
   </div>
 
-  <div class="row" data-bind="foreach: actions().slice(0).reverse()">
+<!-- ko foreach: actions().slice(0).reverse() -->
+  <div class="row">
     <div class="col-xs-4"><h2 data-bind="text: doTime"></h2></div>
     <div class="col-xs-4"><h2 data-bind="text: actionName"></h2></div>
     <div class="col-xs-4">
       <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.toggleText"></a>
     </div>
   </div>
+   <!-- /ko -->
 </div>
 
 <script>
