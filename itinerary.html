@@ -108,20 +108,18 @@ function ViewModel() {
   })
 
   self.clickToggle = function(){
-    // Remove, Up, Down, Complete
-    switch (self.toggleText()) {
-      case self.removeToggleText:
-      self.toggleText(self.upToggleText);
-      break;
-      case self.upToggleText:
-      self.toggleText(self.downToggleText);
-      break;
-      case self.downToggleText:
-      self.toggleText("CO");
-      break;
-      case "CO":
-      self.toggleText(self.removeToggleText);
-      break;
+    var options = [self.removeToggleText,self.upToggleText,self.downToggleText];
+    var optionsIndex = options.length-1;
+
+    for (i = 0; i <= optionsIndex; i++) {
+      if (i == optionsIndex){
+        self.toggleText(options[0])
+        break;
+      }
+      else if (self.toggleText() == options[i]){
+        self.toggleText(options[i+1])
+        break;
+      }
     }
   }
 
