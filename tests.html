@@ -1,0 +1,27 @@
+<link rel="stylesheet" type="text/css" href="lib/css/jasmine.css">
+
+<script src="lib/js/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="lib/js/jasmine.js"></script>
+<script type="text/javascript" src="lib/js/jasmine-html.js"></script>
+<script type="text/javascript" src="lib/js/boot.js"></script>
+
+<script>
+
+describe("When I am hovering over the button", function() {
+
+	beforeEach(function() {
+    	isHovering = true;
+  	});
+
+	it("Then my x coordinate should be my mouse x coordinate", function() {
+		var coordinates = getCorrectCoordinates(2,3);
+    	expect(coordinates['x']).toBe(2);
+  	});
+
+	it("Then my y coordinate should be my mouse y coordinate", function() {
+		var coordinates = getCorrectCoordinates(2,3);
+    	expect(coordinates['y']).toBe(3);
+  });
+});
+
+</script>
