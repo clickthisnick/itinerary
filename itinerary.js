@@ -1,5 +1,3 @@
-function scripts(){
-
   function EventAction(actionTime,actionName) {
     var self = this;
     self.actionName = actionName;
@@ -8,8 +6,21 @@ function scripts(){
     self.completed = false;
   }
 
+  function toggleAction(text,options){
+    var optionsIndex = options.length-1;
+
+    for (i = 0; i <= optionsIndex; i++) {
+      if (i == optionsIndex){
+        return options[0];
+      }
+      else if (text == options[i]){
+        return options[i+1];
+      }
+    }
+  };
+
   // Overall viewmodel for this screen, along with initial state
-  function ViewModel() {
+  function ItineraryViewModel() {
     var self = this;
 
     self.eventPromptText = "What is being done?";
@@ -36,6 +47,10 @@ function scripts(){
 
     self.toggleText = ko.observable(self.removeToggleText);
 
+    self.switchToggle = function(){
+      toggleAction(self.toggleText(),[self.removeToggleText,self.upToggleText,self.downToggleText]);
+    }
+
     self.actionText = ko.computed(function() {
       var toggleText = self.toggleText();
       if (toggleText == self.removeToggleText){
@@ -48,22 +63,6 @@ function scripts(){
         return "Move Down";
       }
     });
-
-    self.clickToggle = function(){
-      var options = [self.removeToggleText,self.upToggleText,self.downToggleText];
-      var optionsIndex = options.length-1;
-
-      for (i = 0; i <= optionsIndex; i++) {
-        if (i == optionsIndex){
-          self.toggleText(options[0]);
-          break;
-        }
-        else if (self.toggleText() == options[i]){
-          self.toggleText(options[i+1]);
-          break;
-        }
-      }
-    };
 
     self.parseInputs = function(){
       var inputWhat = self.inputWhat().replace(/(\w)(\w*)/g,
@@ -208,6 +207,6 @@ function scripts(){
     };
   }
 
-  ko.applyBindings(new ViewModel());
+var itineraryViewModel = new ItineraryViewModel();
 
-}
+ko.applyBindings(itineraryViewModel);
