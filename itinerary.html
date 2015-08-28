@@ -4,11 +4,11 @@
 <script src="lib/js/bootstrap.min.js"></script>
 <script src="lib/js/knockout.js"></script>
 <script src="lib/js/moment.js"></script>
-<script src="itinerary.js"></script>
+
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<body onload="scripts()">
+<body>
 <div class="container">
   <div class="row">
     <div class="col-md-7">
@@ -24,7 +24,7 @@
           </td>
           <td>
             <button data-bind="click: $root.clickAdd" class="btn btn-default">Add</button>
-            <a href="#" class="btn btn-success" data-bind="click: $root.clickToggle,text: toggleText"></a>
+            <a href="#" class="btn btn-success" data-bind="click: $root.switchToggle,text: buttonText"></a>
           </td>
         </tr>
       </table>
@@ -37,25 +37,27 @@
   <div class="row">
     <div class="col-xs-4">Time</div>
     <div class="col-xs-4">Description</div>
-    <div class="col-xs-4" data-bind="text:actionText"></div>
+    <div class="col-xs-4" data-bind="text:headerText"></div>
   </div>
 
   <div class="row">
     <div class="col-xs-4"><h2 data-bind="text: eventTime"></h2></div>
     <div class="col-xs-4"><h2 data-bind="text: eventName"></h2></div>
     <div class="col-xs-4" data-bind="if: eventName() != ''">
-      <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent, text:removeToggleText"></a>
+      <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent, text:$root.removeButton"></a>
     </div>
   </div>
 
-  <!-- ko foreach: actions().slice(0).reverse() -->
+  <!-- ko foreach: items().slice(0).reverse() -->
   <div class="row">
     <div class="col-xs-4"><h2 data-bind="text: doTime"></h2></div>
     <div class="col-xs-4"><h2 data-bind="text: actionName"></h2></div>
     <div class="col-xs-4">
-      <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.toggleText"></a>
+      <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.buttonText"></a>
     </div>
   </div>
   <!-- /ko -->
 </div>
 </body>
+
+<script src="itinerary.js"></script>
