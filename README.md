@@ -6,8 +6,8 @@ itinerary
 Thats why I created itinerary.
 
 Itinerary helps you figure out what time you must start preparing for an event<br>
-First add the event and its time.<br>
-Next add the individual steps you need to take before an event ( Brush Teeth, Travel )<br>
+First add the event and the time it starts.<br>
+Next add the individual steps you need to take before an event ( Brush Teeth, Travel ) and how much time each step takes.<br>
 
 Now you can see what time you need to start preparing for your event! No more being late!
 
