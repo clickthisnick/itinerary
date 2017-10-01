@@ -11,7 +11,7 @@ Next add the individual steps you need to take before an event ( Brush Teeth, Tr
 
 Now you can see what time you need to start preparing for your event! No more being late!
 
-A live version can be found here: <a href='http://clickthisnick.com/projects/itinerary/ctn-itinerary.html' target='_blank'>Itinerary Example</a>
+A live version can be found here: <a href='https://cdn.rawgit.com/clickthisnick/itinerary/master/itinerary.html' target='_blank'>Itinerary Example</a>
 
 Here is an example of a Foo Fighter Concert<br>
 <img src='http://clickthisnick.com/projects/itinerary/Itinerary.png'>
