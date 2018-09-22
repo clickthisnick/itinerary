@@ -44,7 +44,7 @@
 
     self.eventPromptText = "What is being done?";
     self.actionFirstPromptText = "What do you do first?";
-    self.actionAferPromptText = "What do you do next?";
+    self.actionAfterPromptText = "What do you do next?";
 
     self.timePromptText = "At what time?";
     self.durationPrompt = "How long (In Min)?";
@@ -59,7 +59,6 @@
     self.eventTime = ko.observable("");
 
     self.items = ko.observableArray([]);
-
     self.toggleList = [{'headerText':'Remove','buttonText':removeButton},
                         {'headerText':'Move Up','buttonText':moveUpButton},
                         {'headerText':'Move Down','buttonText':moveDownButton}];
@@ -106,7 +105,7 @@
         self.timePrompt(self.durationPrompt);
       }
       else{
-        self.whatPrompt(self.actionAferPromptText);
+        self.whatPrompt(self.actionAfterPromptText);
         self.timePrompt(self.durationPrompt);
       }
     });
@@ -123,7 +122,7 @@
     };
 
     self.addAction = function() {
-      self.items.push(new EventAction(self.inputTime(), self.inputWhat()));
+      self.items.unshift(new EventAction(self.inputTime(), self.inputWhat()));
     };
 
     self.getTime = function(total){

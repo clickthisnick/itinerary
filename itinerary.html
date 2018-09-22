@@ -4,11 +4,32 @@
 <script src="lib/js/bootstrap.min.js"></script>
 <script src="lib/js/knockout.js"></script>
 <script src="lib/js/moment.js"></script>
-
-
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<body>
+<script>
+ function checkTime(i) {
+    if (i < 10) {
+        i = "0" + i;
+    }
+    return i;
+  }
+
+  function startTime() {
+      var today = new Date();
+      var h = today.getHours();
+      var m = today.getMinutes();
+      var s = today.getSeconds();
+      // add a zero in front of numbers<10
+      m = checkTime(m);
+      s = checkTime(s);
+      document.getElementById('time').innerHTML = h + ":" + m + ":" + s;
+      t = setTimeout(function () {
+          startTime()
+      }, 500);
+  }
+</script>
+
+<body onload="startTime()">
 <div class="container">
   <div class="row">
     <div class="col-md-7">
@@ -56,7 +77,11 @@
       <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.buttonText"></a>
     </div>
   </div>
-  <!-- /ko -->
+  <!-- /ko -->  
+
+  <div class="col-xs-4"><h2 id="time"></h2></div>
+  <div class="col-xs-4"><h2>Current Time</h2></div>
+  
 </div>
 </body>
 
