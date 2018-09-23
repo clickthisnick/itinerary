@@ -1,0 +1,13 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: ubuntu:14.04
+    steps:
+      - checkout
+      - npm install
+      - npm run test
+workflows:
+  build_and_test:
+    jobs:
+      - build
