@@ -12,3 +12,7 @@ Next add the individual steps you need to take before an event ( Brush Teeth, Tr
 Now you can see what time you need to start preparing for your event! No more being late!
 
 A live version can be found here: <a href='https://www.clickthisnick.com/itinerary/itinerary.html' target='_blank'>Itinerary Example</a>
+
+## License
+
+This project is licensed under the [Apache 2.0](LICENSE) license.
