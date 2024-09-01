@@ -1,20 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-US">
 
-<link rel="stylesheet" type="text/css" href="lib/css/ceruleanBootswatch.min.css">
-<script src="lib/js/jquery-1.11.3.min.js"></script>
-<script src="lib/js/bootstrap.min.js"></script>
-<script src="lib/js/knockout.js"></script>
-<script src="lib/js/moment.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <!-- Needed for mobile to function (somewhat) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<script>
- function checkTime(i) {
-    if (i < 10) {
+  <link rel="stylesheet" type="text/css" href="assets/ceruleanBootswatch.min.css">
+
+  <script>
+
+    // The main event that you want to work backwards from
+    let mainEventTime = ""
+    let mainEventName = ""
+    let timeIncludeColon = true
+
+    const taskMinutes = []
+    const taskNames = []
+
+    // enum
+    // remove
+    // up
+    // down
+    let action = "remove"
+
+    function checkTime(i) {
+      if (i < 10) {
         i = "0" + i;
+      }
+      return i;
     }
-    return i;
-  }
 
-  function startTime() {
+    function startTime() {
       var today = new Date();
       var h = today.getHours();
       var m = today.getMinutes();
@@ -24,65 +40,288 @@
       s = checkTime(s);
       document.getElementById('time').innerHTML = h + ":" + m + ":" + s;
       t = setTimeout(function () {
-          startTime()
+        startTime()
       }, 500);
-  }
-</script>
+    }
+
+    function getMainEventTime(t) {
+      if (t.indexOf(":") == -1) {
+        alert("incorrect time format")
+        return false
+      }
+  
+      let am = true
+      t = t.trim().toLowerCase()
+      if (t.endsWith("pm")) {
+        am = false
+      } else {
+        am = true
+      }
+
+      let tSplit = t.split(":")
+      let hr = tSplit[0]
+
+      let hrNum = parseInt(hr)
+
+      if (am === false) {
+        hrNum += 12
+      }
+
+      // Need regex here
+      min = tSplit[1].match(/\d+/)
+      if (min) {
+        // The match
+        min = parseInt(min[0])
+        let d = new Date()
+        d.setHours(hrNum)
+        d.setMinutes(min)
+        d.setSeconds(0)
+
+        return d
+      }
+      return false
+    }
+
+    function generateRowHtml(name, dateTime, idx, action, isMain) {
+      if (isMain && action != "remove") {
+        visibility = "hidden"
+      } else {
+        visibility = "visible"
+      }
+
+      return`<tr><td><h2>` + name + `</h2>
+            </td>
+            <td>
+                <h2>` + dateTime.toLocaleTimeString() + `</h2>
+            </td>
+            <td>
+                <button id="row` + idx +`" class="btn btn-danger" style="visibility: ` + visibility + `;" onclick="implementAction(` + idx + `)">` + action + `</button>
+            </td>
+        </tr>`
+    }
+
+    function generateRows() {
+      let rowHtml = "";
+      let minutesToSubtract = 0
+
+      if (mainEventTime == "") {
+        return
+      }
+
+      for (let i = 0; i < taskNames.length; i++) {
+        minutesToSubtract += taskMinutes[i]
+        console.log(minutesToSubtract)
+        const taskDateTime = new Date( mainEventTime.getTime() - ((1000 * minutesToSubtract) * 60) );
+        rowHtml += generateRowHtml(taskNames[i], taskDateTime, i, action, false)
+      }
+
+      rowHtml += generateRowHtml(mainEventName, mainEventTime, taskNames.length + 100, action, true)
+
+      return rowHtml
+    }
+
+    function recreateTaskTable() {
+      // Regenerate the table
+      document.getElementById("timeTable").innerHTML = generateRows()
+    }
+
+    function resetMainEventState() {
+      mainEventName = ""
+      mainEventTime = ""
+      timeIncludeColon = true
+      document.getElementById("promtTime").innerText = "When is your event?"
+      document.getElementById("addEventButton").innerText = "Add Event"
+    }
+
+    function addMainEventState(eventName, dateTime) {
+      document.getElementById("addEventButton").innerText = "Add Time"
+      document.getElementById("promtTime").innerText = "How long will it take (min)?"
+      mainEventName = eventName
+      mainEventTime = dateTime
+      timeIncludeColon = false
+    }
+
+    function timeToHumanReadable(t) {
+      let evening = "am"
+      let hour = t.hour
+      if (t.hour > 12) {
+        evening = "pm"
+        hour -= 12
+      }
+
+      return str(hour) + ":" + str(t.minute) + " " + evening
+    }
+
+    function addRow() {
+      let eventTimeId = document.getElementById('eventTime')
+      const eventTime = eventTimeId.value;
+
+      let eventNameId = document.getElementById('eventName')
+      const eventName = eventNameId.value;
+
+      // If you are inputting the main event
+      if (mainEventName == "") {
+        // Change button from add event to add time
+        let d = getMainEventTime(eventTime)
+        if (d === false) {
+          return
+        }
+        addMainEventState(eventName, d)
+        eventTimeId.value = "";
+        eventNameId.value = "";
+        recreateTaskTable()
+        return
+      }
+
+      // double check that its a number
+      taskMinutes.push(parseInt(eventTime))
+      taskNames.push(eventName)
+      eventTimeId.value = "";
+      eventNameId.value = "";
+
+      recreateTaskTable()
+    }
+
+    function changeAction() {
+      const changeActionButton = document.getElementById("changeActionButton")
+
+      if (action == "remove") {
+        action = "down"
+        changeActionButton.innerText = action
+        recreateTaskTable()
+        return
+      }
+
+      if (action == "down") {
+        action = "up"
+        changeActionButton.innerText = action
+        recreateTaskTable()
+        return
+      }
+
+      if (action == "up") {
+        action = "remove"
+        changeActionButton.innerText = action
+        recreateTaskTable()
+        return
+      }
+
+    }
+
+    function implementAction(idx) {
+      // Remove current item
+      if (action == "remove") {
+        if (idx > taskNames.length - 1) {
+          // This is the main task
+          resetMainEventState()
+          recreateTaskTable()
+          return
+        }
+
+        taskNames.splice(idx, 1);
+        taskMinutes.splice(idx, 1);
+
+        recreateTaskTable()
+        return
+      }
+
+      if (action == "down") {
+        if (idx > taskNames.length - 1) {
+          // This is the main task we can't move up or down, only remove
+          return
+        }
+
+        // Can't move down anymore
+        if (taskNames.length - 1 < idx + 1 ) {
+          return
+        }
+
+        let tmp = taskNames[idx]
+        taskNames[idx] = taskNames[idx+1]
+        taskNames[idx+1] = tmp
+
+        tmp = taskMinutes[idx]
+        taskMinutes[idx] = taskMinutes[idx+1]
+        taskMinutes[idx+1] = tmp
+
+        recreateTaskTable()
+        return
+      }
+
+      if (action == "up") {
+        // Can't move up anymore
+        if (idx == 0 ) {
+          return
+        }
+
+        if (idx > taskNames.length - 1) {
+          // This is the main task we can't move up or down, only remove
+          return
+        }
+
+        let tmp = taskNames[idx]
+        taskNames[idx] = taskNames[idx-1]
+        taskNames[idx-1] = tmp
+
+        tmp = taskMinutes[idx]
+        taskMinutes[idx] = taskMinutes[idx-1]
+        taskMinutes[idx-1] = tmp
+
+        recreateTaskTable()
+        return
+      }
+    }
+  </script>
 
 <body onload="startTime()">
-<div class="container">
-  <div class="row">
-    <div class="col-md-7">
-      <h2 data-bind="text: whatPrompt"></h2>
-      <input type="text" class="form-control" data-bind='value: inputWhat, valueUpdate: "afterkeydown"' /></input>
-    </div>
-    <div class="col-md-5">
-      <h2 data-bind="text: timePrompt"></h2>
-      <table>
+  <table>
+    <tbody>
+      <thead>
         <tr>
-          <td>
-            <input type="text" class="form-control" data-bind='value: inputTime, valueUpdate: "afterkeydown"' /></input>
-          </td>
-          <td>
-            <button data-bind="click: $root.clickAdd" class="btn btn-default">Add</button>
-            <a href="#" class="btn btn-success" data-bind="click: $root.switchToggle,text: buttonText"></a>
-          </td>
+          <th class="col-xs-4" id="promptEvent">What is your event?</th>
+          <th class="col-xs-4" id="promtTime">When is your event?</th>
+          <th class="col-xs-2" id="promptAction">Action</th>
+          <th class="col-xs-2" id="promptChangeAction">Change Action</th>
         </tr>
-      </table>
-    </div>
-  </div>
-</div>
-
-<br>
-<div class="container">
-  <div class="row">
-    <div class="col-xs-4">Time</div>
-    <div class="col-xs-4">Description</div>
-    <div class="col-xs-4" data-bind="text:headerText"></div>
-  </div>
-
-  <div class="row">
-    <div class="col-xs-4"><h2 data-bind="text: eventTime"></h2></div>
-    <div class="col-xs-4"><h2 data-bind="text: eventName"></h2></div>
-    <div class="col-xs-4" data-bind="if: eventName() != ''">
-      <a href="#" class="btn btn-danger" data-bind="click: $root.removeEvent, text:$root.removeButton"></a>
-    </div>
-  </div>
-
-  <!-- ko foreach: items().slice(0).reverse() -->
-  <div class="row">
-    <div class="col-xs-4"><h2 data-bind="text: doTime"></h2></div>
-    <div class="col-xs-4"><h2 data-bind="text: actionName"></h2></div>
-    <div class="col-xs-4">
-      <a href="#" class="btn btn-default" data-bind="click: $root.toggleAction, text: $root.buttonText"></a>
-    </div>
-  </div>
-  <!-- /ko -->  
-
-  <div class="col-xs-4"><h2 id="time"></h2></div>
-  <div class="col-xs-4"><h2>Current Time</h2></div>
-  
-</div>
+      </thead>
+    </tbody>
+    <tr>
+      <td>
+        <input type="text" id="eventName" class="col-xs-6 form-control" /></input>
+      </td>
+      <td>
+        <input type="text" id="eventTime" class="col-xs-6 form-control" /></input>
+      </td>
+      <td id="addAction"><button id="addEventButton" class="btn btn-success" onclick="addRow()">Add Event</button></th>
+      </td>
+      <td id="changeAction"><button id="changeActionButton" class="btn btn-success"
+          onclick="changeAction()">remove</button></th>
+      </td>
+    </tr>
 </body>
 
-<script src="itinerary.js"></script>
+<br>
+<table id="timeTable" class="table table-striped table-hover ">
+  <tbody>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Description</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+  </tbody>
+</table>
+
+<br>
+
+<div class="col-xs-4">
+  <h2>Current Time</h2>
+</div>
+<div class="col-xs-4">
+  <h2 id="time"></h2>
+</div>
+
+
+</div>
+</body>
