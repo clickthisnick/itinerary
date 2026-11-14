@@ -1,0 +1,47 @@
+# Itinerary
+
+Itinerary works backward from an event so a person can see when to start getting ready.
+
+Live site: https://www.clickthisnick.com/itinerary/
+Planner: https://www.clickthisnick.com/itinerary/itinerary.html
+
+The site is static HTML, CSS, and JavaScript. There is no account and no server-side save. The plan lives in the page and in the query string.
+
+## Open the planner
+
+From the home page, follow "Open the planner" (`#open-planner`) to `itinerary.html`.
+
+## Add an event
+
+1. The name field is `#event-name` ("What is your event?").
+2. The time field is `#event-time` ("When is your event?"). Accepted times include `7:00 PM`, `7pm`, `7:00 p.m.`, and `19:00`. `12:00 AM` is midnight and `12:00 PM` is noon.
+3. Submit with the `#add-event` button or the Enter key. The button is labeled "Add event" until an event exists.
+
+## Add steps
+
+After the event is saved, the same fields ask for the next step and how many minutes it takes. The button is labeled "Add step". Enter steps in the order they will be done. The last step finishes when the event starts.
+
+Durations are whole minutes from 1 to 1440, with an optional unit such as `15` or `15 minutes`.
+
+## Read the result
+
+- `#start-summary` states when to start preparing.
+- `#schedule` lists each step, the clock time to start it, and the event. A time on the previous day includes the words "previous day".
+- `#status` (`role="status"`, `aria-live="polite"`) reports what the last action did, including validation problems.
+- `#clock` is the current local time.
+
+## Change the list
+
+`#change-action` cycles the row action: Remove, Move down, Move up. Its visible text is "Row action: Remove" (or the current action). Each schedule row has a button `#row-action-0`, `#row-action-1`, and so on. Move up is unavailable on the first step. Move down is unavailable on the last step. The event stays at the end; in Remove mode its button removes the event and keeps the steps.
+
+## Share
+
+The address bar updates as the plan changes. `#copy-link` copies that URL. Query parameters:
+
+- `event`: event name
+- `at`: clock time, for example `7:00 PM`
+- `step`: repeated. Each value is `minutes|name` in the order the steps are done.
+
+Example: `itinerary.html?event=Dinner&at=7%3A00+PM&step=10%7CBrush+teeth&step=30%7CTravel`
+
+Brush teeth starts at 6:20 PM, travel starts at 6:30 PM, and dinner is at 7:00 PM.

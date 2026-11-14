@@ -1,24 +1,37 @@
-itinerary
-===========
+# Itinerary
 
-<h4>Find yourself always late to the big event?</h4>
+Find yourself always late to the big event?
 
-That's why I created itinerary.
+Itinerary works backward from the time you need to be somewhere. Add the event, then add each step you take beforehand (brush teeth, travel) and how many minutes it takes. The page shows when to start each step, including the moment you need to start getting ready.
 
-Itinerary helps you figure out what time you must start preparing for an event<br>
-First add the event and the time it starts.<br>
-Next add the individual steps you need to take before an event ( Brush Teeth, Travel ) and how much time each step takes.<br>
+Live app: <https://www.clickthisnick.com/itinerary/itinerary.html>
 
-Now you can see what time you need to start preparing for your event! No more being late!
+## Run it locally
 
-A live version can be found here: <a href='https://www.clickthisnick.com/itinerary/itinerary.html' target='_blank'>Itinerary Example</a>
+The site is the HTML, CSS, and JavaScript in this folder. Opening the files is enough. There is no build step.
 
-## TODO
+- Open `itinerary.html` in a browser, or
+- From this folder, run `python3 -m http.server 8080` and visit <http://localhost:8080/itinerary.html>
 
-Need to add regex parsing
-Need to add some sort of popup toast notifications when things are wrong
-Need to make it look nicer
-Need to add the time calculations, without an external framework if possible
+A copied link opens the same plan. The page keeps the event and steps in the query string (`event`, `at`, and one `step` value per step, written as `minutes|name`).
+
+## How the schedule is calculated
+
+Steps stay in the order you will do them. The last step ends when the event starts, and each earlier step is placed before that. Move up and Move down reorder those steps. Noon is 12:00 PM and midnight is 12:00 AM. When the prep time crosses midnight, the start time says it is on the previous day.
+
+Accepted event times include `7:00 PM`, `7pm`, and `19:00`. Step lengths are whole minutes, such as `15` or `15 minutes`.
+
+## Tests
+
+Requires Node.js 20 or newer.
+
+```bash
+node --test
+```
+
+`npm test` runs the same checks. GitHub Actions runs them on every push and pull request.
+
+Notes for browser agents are in [llms.txt](llms.txt).
 
 ## License
 

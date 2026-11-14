@@ -1,0 +1,13 @@
+{
+  "name": "itinerary",
+  "private": true,
+  "description": "Work backward from an event to see when to start preparing.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --check itinerary.js && node --test",
+    "start": "python3 -m http.server 8080"
+  }
+}
