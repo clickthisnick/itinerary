@@ -8,10 +8,12 @@ Live app: <https://www.clickthisnick.com/itinerary/itinerary.html>
 
 ## Run it locally
 
-The site is the HTML, CSS, and JavaScript in this folder. Opening the files is enough. There is no build step.
+These files are the site. `index.html`, `itinerary.html`, `itinerary.js`, and `assets/` are what GitHub Pages serves. Nothing generates them.
 
 - Open `itinerary.html` in a browser, or
-- From this folder, run `python3 -m http.server 8080` and visit <http://localhost:8080/itinerary.html>
+- From this folder, run `npm start` and visit <http://127.0.0.1:8080/itinerary.html>
+
+`npm start` runs `scripts/serve.js`, a Node preview server for the files already in this folder. It is not part of the published site.
 
 A copied link opens the same plan. The page keeps the event and steps in the query string (`event`, `at`, and one `step` value per step, written as `minutes|name`).
 

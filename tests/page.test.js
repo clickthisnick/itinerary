@@ -67,7 +67,10 @@ describe("planner page", function () {
   it("documents how to run the app and how an agent should use it", function () {
     assert.match(readme, /itinerary\.html/);
     assert.match(readme, /node --test/);
-    assert.match(readme, /python3 -m http\.server/);
+    assert.match(readme, /npm start/);
+    assert.match(readme, /scripts\/serve\.js/);
+    const pkg = JSON.parse(read("package.json"));
+    assert.equal(pkg.scripts.start, "node scripts/serve.js");
     assert.match(notes, /#event-name/);
     assert.match(notes, /#add-event/);
     assert.match(notes, /#schedule/);

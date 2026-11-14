@@ -8,6 +8,6 @@
   },
   "scripts": {
     "test": "node --check itinerary.js && node --test",
-    "start": "python3 -m http.server 8080"
+    "start": "node scripts/serve.js"
   }
 }
