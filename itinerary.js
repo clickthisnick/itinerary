@@ -1,196 +1,337 @@
-  function EventAction(actionTime,actionName) {
-    var self = this;
-    self.actionName = actionName;
-    self.actionTime = parseInt(actionTime);
-    self.doTime = ko.observable("");
-    self.completed = false;
-  }
+// @ts-check
+/**
+ * Itinerary page logic. The HTML calls addRow, changeAction, implementAction,
+ * and startTime. Those names stay on purpose.
+ */
 
-  function toggleText(text,options){
-    var optionsIndex = options.length-1;
+/**
+ * @typedef {"" | Date} MainEventTime
+ * @typedef {"remove" | "down" | "up"} RowAction
+ * @typedef {{
+ *   mainEventTime: MainEventTime,
+ *   mainEventName: string,
+ *   taskMinutes: number[],
+ *   taskNames: string[],
+ *   action: RowAction,
+ * }} ItineraryState
+ * @typedef {{
+ *   value?: string,
+ *   innerText: string,
+ *   innerHTML: string,
+ * }} Field
+ * @typedef {{ getElementById: (id: string) => Field }} ItineraryDocument
+ */
 
-    for (i = 0; i <= optionsIndex; i++) {
-      if (i == optionsIndex){
-        return options[0];
-      }
-      else if (text == options[i]['buttonText']){
-        return options[i+1]
-      }
-    }
+/** @returns {ItineraryState} */
+export function createState() {
+  return {
+    mainEventTime: "",
+    mainEventName: "",
+    taskMinutes: [],
+    taskNames: [],
+    action: "remove",
   };
+}
 
-  function removeItem(items,item){
-      items.remove(item);
-      return items()
+/**
+ * Hours stay unpadded. Minutes and seconds below 10 get a leading zero.
+ * @param {number} value
+ * @returns {string | number}
+ */
+export function padTime(value) {
+  if (value < 10) {
+    return "0" + value;
+  }
+  return value;
+}
+
+/**
+ * @param {Date} date
+ * @returns {string}
+ */
+export function formatClock(date) {
+  const hours = date.getHours();
+  const minutes = padTime(date.getMinutes());
+  const seconds = padTime(date.getSeconds());
+  return hours + ":" + minutes + ":" + seconds;
+}
+
+/**
+ * Parse the main event time the way the page always has.
+ * "pm" adds 12 to the hour, including 12pm. Anything else, including 12am, is left as-is.
+ * A missing colon alerts. A colon with no minute number does not.
+ * @param {string} text
+ * @param {(message: string) => void} notify
+ * @returns {Date | false}
+ */
+export function parseMainEventTime(text, notify) {
+  if (text.indexOf(":") === -1) {
+    notify("incorrect time format");
+    return false;
   }
 
-  function pascalCase(text){
-    return text.replace(/(\w)(\w*)/g,
-    function(g0,g1,g2){return g1.toUpperCase() + g2.toLowerCase();});
+  const normalized = text.trim().toLowerCase();
+  const isPm = normalized.endsWith("pm");
+  const parts = normalized.split(":");
+  let hour = parseInt(parts[0], 10);
+  if (isPm) {
+    hour += 12;
   }
 
-  function lowerCase(text){
-    return text.toLowerCase();
+  const minuteMatch = parts[1].match(/\d+/);
+  if (!minuteMatch) {
+    return false;
   }
 
-  // Overall viewmodel for this screen, along with initial state
-  function ItineraryViewModel() {
-    var self = this;
+  const minute = parseInt(minuteMatch[0], 10);
+  const date = new Date();
+  date.setHours(hour);
+  date.setMinutes(minute);
+  date.setSeconds(0);
+  return date;
+}
 
-    self.removeButton = 'X'
-    var removeButton = 'X';
-    var moveUpButton = 'UP';
-    var moveDownButton = 'DN';
+/**
+ * @param {string} name
+ * @param {Date} dateTime
+ * @param {number} index
+ * @param {RowAction} action
+ * @param {boolean} isMain
+ * @returns {string}
+ */
+export function renderRow(name, dateTime, index, action, isMain) {
+  const visibility = isMain && action !== "remove" ? "hidden" : "visible";
+  return (
+    `<tr><td><h2>${name}</h2></td>` +
+    `<td><h2>${dateTime.toLocaleTimeString()}</h2></td>` +
+    `<td><button id="row${index}" class="btn btn-danger" type="button" style="visibility: ${visibility};" ` +
+    `onclick="implementAction(${index})">${action}</button></td></tr>`
+  );
+}
 
-    self.eventPromptText = "What is being done?";
-    self.actionFirstPromptText = "What do you do first?";
-    self.actionAfterPromptText = "What do you do next?";
+/**
+ * Tasks are listed in entry order. Each row starts earlier than the main event
+ * by the sum of durations up to and including that row.
+ * With no main event, this returns undefined. The page writes that as the text "undefined".
+ * @param {ItineraryState} state
+ * @returns {string | undefined}
+ */
+export function scheduleHtml(state) {
+  if (state.mainEventTime === "") {
+    return undefined;
+  }
 
-    self.timePromptText = "At what time?";
-    self.durationPrompt = "How long (In Min)?";
+  const mainEventTime = state.mainEventTime;
+  let html = "";
+  let minutesToSubtract = 0;
+  for (let index = 0; index < state.taskNames.length; index += 1) {
+    minutesToSubtract += state.taskMinutes[index];
+    const taskDateTime = new Date(
+      mainEventTime.getTime() - 1000 * minutesToSubtract * 60,
+    );
+    html += renderRow(
+      state.taskNames[index],
+      taskDateTime,
+      index,
+      state.action,
+      false,
+    );
+  }
 
-    self.whatPrompt = ko.observable(self.eventPromptText);
-    self.timePrompt = ko.observable(self.timePromptText);
+  html += renderRow(
+    state.mainEventName,
+    mainEventTime,
+    state.taskNames.length + 100,
+    state.action,
+    true,
+  );
+  return html;
+}
 
-    self.inputWhat = ko.observable("");
-    self.inputTime = ko.observable("");
+/** @param {RowAction} action @returns {RowAction} */
+export function nextAction(action) {
+  if (action === "remove") {
+    return "down";
+  }
+  if (action === "down") {
+    return "up";
+  }
+  return "remove";
+}
 
-    self.eventName = ko.observable("");
-    self.eventTime = ko.observable("");
+/**
+ * @param {string[]} names
+ * @param {number[]} minutes
+ * @param {number} from
+ * @param {number} to
+ */
+function swapTasks(names, minutes, from, to) {
+  const name = names[from];
+  names[from] = names[to];
+  names[to] = name;
 
-    self.items = ko.observableArray([]);
-    self.toggleList = [{'headerText':'Remove','buttonText':removeButton},
-                        {'headerText':'Move Up','buttonText':moveUpButton},
-                        {'headerText':'Move Down','buttonText':moveDownButton}];
+  const duration = minutes[from];
+  minutes[from] = minutes[to];
+  minutes[to] = duration;
+}
 
-    self.buttonText = ko.observable(self.toggleList[0]['buttonText']);
-    self.headerText = ko.observable(self.toggleList[0]['headerText']);
+/**
+ * @param {ItineraryState} state
+ * @param {number} index
+ * @returns {boolean} false when the click cannot change the list
+ */
+export function applyAction(state, index) {
+  const lastTask = state.taskNames.length - 1;
+  const isMainEvent = index > lastTask;
 
-    self.switchToggle = function(){
-      var toggle = toggleText(self.buttonText(),self.toggleList);
-      self.buttonText(toggle['buttonText']);
-      self.headerText(toggle['headerText']);
+  if (state.action === "remove") {
+    if (isMainEvent) {
+      state.mainEventName = "";
+      state.mainEventTime = "";
+      return true;
     }
-
-    self.formatInputs = function(){
-      self.inputWhat(pascalCase(self.inputWhat()));
-      self.inputTime(lowerCase(self.inputTime()));
-    }
-
-    self.clickAdd = function(){
-      if (self.inputWhat() === "" || self.inputTime() === ""){
-        alert("Please enter both a what and time");
-      }
-      else{
-        self.formatInputs();
-
-        if (self.eventName() === ""){
-          self.addEvent();
-        }
-        else {
-          self.addAction();
-        }
-        self.clearInputs();
-      }
-    };
-
-    self.changeText = ko.computed(function() {
-      // Changing the event/time prompt
-      if (self.eventName() === ""){
-        self.whatPrompt(self.eventPromptText);
-        self.timePrompt(self.timePromptText);
-      }
-      else if(self.items().length === 0){
-        self.whatPrompt(self.actionFirstPromptText);
-        self.timePrompt(self.durationPrompt);
-      }
-      else{
-        self.whatPrompt(self.actionAfterPromptText);
-        self.timePrompt(self.durationPrompt);
-      }
-    });
-
-    self.clearInputs = function(){
-      self.inputWhat("");
-      self.inputTime("");
-    };
-
-    self.addEvent = function(){
-      self.eventName(self.inputWhat());
-      self.eventTime(self.inputTime().toLowerCase());
-      self.clearInputs();
-    };
-
-    self.addAction = function() {
-      self.items.unshift(new EventAction(self.inputTime(), self.inputWhat()));
-    };
-
-    self.getTime = function(total){
-      if (self.eventTime() !== ""){
-        var time = moment(self.eventTime(), "hh:mm a");
-        var timeString = time.subtract(total, 'minutes').format("hh:mm a");
-        if (timeString[0] == "0"){
-          return timeString.substr(1);
-        }
-        return timeString;
-      }
-      return "-";
-    };
-
-    self.calculateActionTimes = ko.computed(function() {
-      var total = 0;
-      for (var i = self.items().length - 1; i >= 0; i--) {
-        total+= self.items()[i].actionTime;
-
-        var timeString = self.getTime(total);
-
-        self.items()[i].doTime(timeString);
-      }
-    }, self);
-
-    self.toggleAction = function(item){
-      var action = self.buttonText();
-
-      if (action == removeButton){
-        var items = removeItem(self.items,item);
-        self.items(items);
-      }
-      else{
-        var index = self.items().indexOf(item);
-        var thisItem = self.items()[index];
-
-        self.items().movePosition(thisItem,action);
-        self.items.push(new EventAction("", ""));
-        self.items.pop();
-      }
-    };
-
-    self.removeEvent = function() {
-      self.eventName("");
-      self.eventTime("");
-    };
-
-    Array.prototype.movePosition = function(value, direction, by) {
-
-      if (direction == moveUpButton){
-        var index = this.indexOf(value),
-        newPos = index + (by || 1);
-      }
-      else if (direction == moveDownButton){
-        var index = this.indexOf(value),
-        newPos = index - (by || 1);
-      }
-
-      if(index === -1)
-      throw new Error("Element not found in array");
-
-      if(newPos < 0)
-      newPos = 0;
-
-      this.splice(index,1);
-      this.splice(newPos,0,value);
-    };
+    state.taskNames.splice(index, 1);
+    state.taskMinutes.splice(index, 1);
+    return true;
   }
 
-var itineraryViewModel = new ItineraryViewModel();
-ko.applyBindings(itineraryViewModel);
+  if (state.action === "down") {
+    if (isMainEvent || lastTask < index + 1) {
+      return false;
+    }
+    swapTasks(state.taskNames, state.taskMinutes, index, index + 1);
+    return true;
+  }
+
+  if (index === 0 || isMainEvent) {
+    return false;
+  }
+  swapTasks(state.taskNames, state.taskMinutes, index, index - 1);
+  return true;
+}
+
+/**
+ * @param {ItineraryState} state
+ * @param {string} name
+ * @param {string} timeText
+ * @param {(message: string) => void} notify
+ * @returns {boolean}
+ */
+export function addEntry(state, name, timeText, notify) {
+  if (state.mainEventName === "") {
+    const parsed = parseMainEventTime(timeText, notify);
+    if (parsed === false) {
+      return false;
+    }
+    state.mainEventName = name;
+    state.mainEventTime = parsed;
+    return true;
+  }
+
+  state.taskMinutes.push(parseInt(timeText, 10));
+  state.taskNames.push(name);
+  return true;
+}
+
+/** @param {ItineraryDocument} doc @param {ItineraryState} state */
+export function paint(doc, state) {
+  const addingEvent = state.mainEventName === "";
+  doc.getElementById("addEventButton").innerText = addingEvent
+    ? "Add Event"
+    : "Add Time";
+  doc.getElementById("promtTime").innerText = addingEvent
+    ? "When is your event?"
+    : "How long will it take (min)?";
+  doc.getElementById("changeActionButton").innerText = state.action;
+
+  const rows = scheduleHtml(state);
+  // A missing main event used to assign innerHTML the value undefined, which
+  // the browser shows as the word "undefined". Keep that result.
+  doc.getElementById("timeTable").innerHTML =
+    rows === undefined ? "undefined" : rows;
+}
+
+/**
+ * @param {ItineraryDocument} doc
+ * @param {ItineraryState} state
+ * @param {(message: string) => void} notify
+ */
+export function addRow(doc, state, notify) {
+  const nameInput = doc.getElementById("eventName");
+  const timeInput = doc.getElementById("eventTime");
+  const added = addEntry(
+    state,
+    nameInput.value ?? "",
+    timeInput.value ?? "",
+    notify,
+  );
+  if (!added) {
+    return;
+  }
+  nameInput.value = "";
+  timeInput.value = "";
+  paint(doc, state);
+}
+
+/** @param {ItineraryDocument} doc @param {ItineraryState} state */
+export function changeAction(doc, state) {
+  state.action = nextAction(state.action);
+  paint(doc, state);
+}
+
+/**
+ * @param {ItineraryDocument} doc
+ * @param {ItineraryState} state
+ * @param {number} index
+ */
+export function implementAction(doc, state, index) {
+  if (!applyAction(state, index)) {
+    return;
+  }
+  paint(doc, state);
+}
+
+/**
+ * @param {ItineraryDocument} doc
+ * @param {() => Date} now
+ * @param {(callback: () => void, delay: number) => unknown} schedule
+ */
+export function startTime(doc, now, schedule) {
+  const tick = () => {
+    doc.getElementById("time").innerHTML = formatClock(now());
+    schedule(tick, 500);
+  };
+  tick();
+}
+
+/**
+ * Wire the page. Does nothing where there is no document, so tests can import this file.
+ * @param {{ getElementById: (id: string) => unknown } | undefined} [doc]
+ * @param {(message: string) => void} [notify]
+ */
+export function boot(doc, notify) {
+  const pageDoc = /** @type {ItineraryDocument | undefined} */ (
+    doc !== undefined ? doc : globalThis.document
+  );
+  if (!pageDoc || !pageDoc.getElementById("eventName")) {
+    return;
+  }
+
+  const report = notify ?? globalThis.alert;
+  const state = createState();
+  const page = /** @type {Record<string, unknown>} */ (globalThis);
+  page.addRow = () => addRow(pageDoc, state, report);
+  page.changeAction = () => changeAction(pageDoc, state);
+  page.implementAction = (/** @type {number} */ index) =>
+    implementAction(pageDoc, state, index);
+  page.startTime = () =>
+    startTime(
+      pageDoc,
+      () => new Date(),
+      (callback, delay) => {
+        setTimeout(callback, delay);
+      },
+    );
+}
+
+boot();

@@ -18,7 +18,6 @@ A live version can be found here: <a href='https://www.clickthisnick.com/itinera
 Need to add regex parsing
 Need to add some sort of popup toast notifications when things are wrong
 Need to make it look nicer
-Need to add the time calculations, without an external framework if possible
 
 ## License
 

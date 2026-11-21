@@ -1,0 +1,4 @@
+{
+  "maxBytes": 16000,
+  "note": "Raw bytes of index.html, itinerary.html, itinerary.js, and assets/ceruleanBootswatch.min.css. Raise this only when a feature needs the bytes."
+}
