@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    check-fast:
+      run: npm run check:fast
